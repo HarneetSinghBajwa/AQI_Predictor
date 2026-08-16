@@ -60,7 +60,7 @@ GUI
 | `globalAQI_raw.csv` | Original/raw dataset                   |
 | `data_process.py`   | Cleans and preprocesses the dataset    |
 | `clean_data.csv`    | Processed dataset                      |
-| `mode_train.py`     | Trains the Linear Regression model     |
+| `model_train.py`     | Trains the Linear Regression model     |
 | `AQI_model.pkl`     | Saved trained model                    |
 | `evaluate.py`       | Evaluates model performance            |
 | `interface.py`      | Graphical interface for AQI prediction |
@@ -146,7 +146,7 @@ clean_data.csv
 ### 3. Train the model
 
 ```bash
-python mode_train.py
+python model_train.py
 ```
 
 This creates:
@@ -178,7 +178,7 @@ data_process.py
         ↓
 clean_data.csv
         ↓
-mode_train.py
+model_train.py
         ↓
 AQI_model.pkl
         ↓
