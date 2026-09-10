@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QLabel,
     QLineEdit,
+    QComboBox,
     QPushButton,
     QGridLayout,
     QVBoxLayout,
@@ -28,7 +29,12 @@ from PySide6.QtWidgets import (
 # CONFIGURATION
 # ==================================================
 
-MODEL_FILE = "AQI_model.pkl"
+MODEL_FILES = {
+    "Linear Regression": "AQI_model.pkl",
+    "Decision Tree": "AQI_decision_tree.pkl",
+}
+
+DEFAULT_MODEL = "Linear Regression"
 
 FEATURES = [
     "PM2.5",
@@ -371,6 +377,7 @@ class AQIPredictor(QWidget):
 
         self.model = None
         self.input_fields = {}
+        self.selected_model = DEFAULT_MODEL
 
         self.load_model()
         self.setup_window()
@@ -382,10 +389,12 @@ class AQIPredictor(QWidget):
 
     def load_model(self):
 
+        model_file = MODEL_FILES[self.selected_model]
+
         try:
 
             self.model = joblib.load(
-                MODEL_FILE
+                model_file
             )
 
         except FileNotFoundError:
@@ -393,8 +402,8 @@ class AQIPredictor(QWidget):
             QMessageBox.critical(
                 self,
                 "Model Error",
-                f"'{MODEL_FILE}' was not found.\n\n"
-                "Make sure AQI_model.pkl is in the "
+                f"'{model_file}' was not found.\n\n"
+                "Make sure the model file is in the "
                 "same folder as GUI.py."
             )
 
@@ -507,6 +516,32 @@ class AQIPredictor(QWidget):
             QLineEdit:focus {
                 border: 1px solid #8D9678;
                 background-color: #FFFFFF;
+            }
+
+            QComboBox {
+                background-color: #FCFBF8;
+                border: 1px solid #DDD5C9;
+                border-radius: 14px;
+                padding: 12px 14px;
+                color: #282522;
+                font-family: "Georgia";
+                font-size: 14px;
+            }
+
+            QComboBox:hover {
+                border: 1px solid #C8C0B4;
+            }
+
+            QComboBox:focus {
+                border: 1px solid #8D9678;
+                background-color: #FFFFFF;
+            }
+
+            QComboBox QAbstractItemView {
+                background-color: #FFFFFF;
+                color: #282522;
+                border: 1px solid #DDD5C9;
+                selection-background-color: #CBD4C3;
             }
 
             QPushButton#predictButton {
@@ -692,7 +727,7 @@ class AQIPredictor(QWidget):
         )
 
         status_text = QLabel(
-            "Model ready"
+            f"{self.selected_model} ready"
         )
 
         status_text.setObjectName(
@@ -750,6 +785,46 @@ class AQIPredictor(QWidget):
             28,
             28,
             28
+        )
+
+        # --------------------------------------------------
+        # Model selector
+        # --------------------------------------------------
+
+        model_selector_layout = QVBoxLayout()
+        model_selector_layout.setSpacing(6)
+
+        model_selector_label = QLabel(
+            "Model"
+        )
+        model_selector_label.setObjectName(
+            "fieldLabel"
+        )
+
+        self.model_selector = QComboBox()
+        self.model_selector.addItems(
+            list(MODEL_FILES.keys())
+        )
+        self.model_selector.setCurrentText(
+            self.selected_model
+        )
+        self.model_selector.currentTextChanged.connect(
+            self.change_model
+        )
+
+        model_selector_layout.addWidget(
+            model_selector_label
+        )
+        model_selector_layout.addWidget(
+            self.model_selector
+        )
+
+        input_layout.addLayout(
+            model_selector_layout
+        )
+
+        input_layout.addSpacing(
+            18
         )
 
         # --------------------------------------------------
@@ -1013,14 +1088,14 @@ class AQIPredictor(QWidget):
             """
         )
 
-        model_info = QLabel(
+        self.model_info = QLabel(
             "Model\n"
-            "Multiple Linear Regression\n\n"
+            f"{self.selected_model}\n\n"
             "Inputs\n"
             "8 environmental parameters"
         )
 
-        model_info.setObjectName(
+        self.model_info.setObjectName(
             "modelInfo"
         )
 
@@ -1057,7 +1132,7 @@ class AQIPredictor(QWidget):
         )
 
         result_layout.addWidget(
-            model_info
+            self.model_info
         )
 
         result_layout.addStretch()
@@ -1303,6 +1378,41 @@ class AQIPredictor(QWidget):
             )
 
         return values
+
+    # ==================================================
+    # CHANGE MODEL
+    # ==================================================
+
+    def change_model(self, model_name):
+
+        self.selected_model = model_name
+        self.load_model()
+
+        self.model_info.setText(
+            "Model\n"
+            f"{self.selected_model}\n\n"
+            "Inputs\n"
+            "8 environmental parameters"
+        )
+
+        status_labels = self.findChildren(QLabel, "statusText")
+        if status_labels:
+            status_labels[0].setText(
+                f"{self.selected_model} ready"
+            )
+
+        self.result_value.setText(
+            "--"
+        )
+
+        self.result_category.setText(
+            "WAITING FOR INPUT"
+        )
+
+        self.result_description.setText(
+            "Enter the environmental measurements "
+            "to generate an AQI estimate."
+        )
 
     # ==================================================
     # PREDICT

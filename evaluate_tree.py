@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 TRAIN_FILE = BASE_DIR / "train_data.csv"
 TEST_FILE = BASE_DIR / "test_data.csv"
-MODEL_FILE = BASE_DIR / "AQI_model.pkl"
+MODEL_FILE = BASE_DIR / "AQI_decision_tree.pkl"
 
 
 # --------------------------------------------------
@@ -35,7 +35,7 @@ TARGET = "AQI"
 
 
 # --------------------------------------------------
-# Read datasets
+# Read training and testing datasets
 # --------------------------------------------------
 
 train_df = pd.read_csv(TRAIN_FILE)
@@ -46,32 +46,43 @@ print("Testing dataset shape:", test_df.shape)
 
 
 # --------------------------------------------------
-# Calculate medians from TRAINING data only
+# Calculate medians from training data ONLY
 # --------------------------------------------------
 
 training_medians = {}
 
+print("\nTraining-set median values:")
+
 for column in FEATURES:
-    training_medians[column] = train_df[column].median()
+
+    median_value = train_df[column].median()
+
+    training_medians[column] = median_value
+
+    print(f"{column}: {median_value}")
 
 
 # --------------------------------------------------
-# Apply training medians to TEST data
+# Prepare test data
 # --------------------------------------------------
-# The test data is not used to calculate
-# any preprocessing statistics.
 
 X_test = test_df[FEATURES].copy()
 y_test = test_df[TARGET]
 
+
+# --------------------------------------------------
+# Apply training medians to test data
+# --------------------------------------------------
+
 for column in FEATURES:
+
     X_test[column] = X_test[column].fillna(
         training_medians[column]
     )
 
 
 # --------------------------------------------------
-# Load trained model
+# Load trained Decision Tree model
 # --------------------------------------------------
 
 model = joblib.load(MODEL_FILE)
@@ -99,24 +110,17 @@ r2 = r2_score(y_test, y_pred)
 
 
 # --------------------------------------------------
-# Display results
+# Display evaluation results
 # --------------------------------------------------
 
-print("\nModel Evaluation Results")
-print("--------------------------------")
+print("\n========================================")
+print("       DECISION TREE EVALUATION")
+print("========================================")
 
 print(f"MAE  : {mae:.2f}")
 print(f"RMSE : {rmse:.2f}")
 print(f"R²   : {r2:.4f}")
 
-
-# --------------------------------------------------
-# Explanation
-# --------------------------------------------------
-
-print("\nWhy these metrics were used:")
-print("MAE  - Shows the average absolute AQI prediction error.")
-print("RMSE - Gives greater importance to larger prediction errors.")
-print("R²   - Measures how well the model explains variation in AQI.")
+print("========================================")
 
 print("\nEvaluation completed successfully.")
